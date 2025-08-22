@@ -15,6 +15,7 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as pythonLambda from '@aws-cdk/aws-lambda-python-alpha';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -59,10 +60,11 @@ export class DocumentClassifierStack extends cdk.Stack {
     // to be done through console or via CLI
     // parameter store
     // environments.ts file in config in user-api
-    const classificationLambda = new lambda.Function(this, 'DocumentClassifier', {
+    const classificationLambda = new pythonLambda.PythonFunction(this, 'DocumentClassifier', {
       runtime: lambda.Runtime.PYTHON_3_11,
-      handler: 'classify_documents.handler',  // Main handler for all types
-      code: lambda.Code.fromAsset('src/lambdas/api'),
+      handler: 'handler',
+      entry: 'src/lambdas/api',
+      index: 'classify_documents.py',
       role: lambdaRole,
       timeout: cdk.Duration.seconds(300),  // Increased for file processing
       memorySize: 1024,  // Increased for larger files
