@@ -92,12 +92,14 @@ export class DocumentClassifierStack extends cdk.Stack {
     // API Resources and Methods
     //Adds POST request and connects to the classification lambda function
     // /api/aarm/classify
-    const classifyResource = api.root.addResource('api').addResource('aarm').addResource('classify');
+    const apiResource = api.root.addResource('api');
+    const aarmResource = apiResource.addResource('aarm');
     
+    const classifyResource = aarmResource.addResource('classify');
     classifyResource.addMethod('POST', new apigateway.LambdaIntegration(classificationLambda));
 
     // Add list files endpoint
-    const listFilesResource = api.root.addResource('api').addResource('aarm').addResource('list-files');
+    const listFilesResource = aarmResource.addResource('list-files');
     listFilesResource.addMethod('POST', new apigateway.LambdaIntegration(classificationLambda));
 
     // Outputs
