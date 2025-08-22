@@ -34,7 +34,7 @@ export class DocumentClassifierStack extends cdk.Stack {
     // S3 Bucket for document storage
     const documentsBucket = new s3.Bucket(this, 'DocumentsBucket', {
       // Will this bucket be common to all endpoints i define for risk navigator?
-      bucketName: `${this.account}-risk-navigator-documents`,
+      bucketName: `risk-navigator-documents-${process.env.CDK_ENV || "dev"}`,
       versioned: true,
       encryption: s3.BucketEncryption.S3_MANAGED,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -83,7 +83,7 @@ export class DocumentClassifierStack extends cdk.Stack {
     // API Gateway
     //This is a REST API Gateway that will be used to classify the documents using the Gemini AI model
     //It contains the API name, the description, the default CORS preflight options, and the API resources and methods
-    const api = new apigateway.RestApi(this, 'DocumentClassifierAPI', {
+    const api = new apigateway.RestApi(this, `DocumentClassifierAPI-${process.env.CDK_ENV || "dev"}`, {
       restApiName: 'Document Classifier API',
       description: 'API for classifying insurance documents using Gemini AI',
       defaultCorsPreflightOptions: {
