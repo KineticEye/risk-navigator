@@ -15,11 +15,11 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
-import * as pythonLambda from '@aws-cdk/aws-lambda-python-alpha';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
+import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 
 export interface DocumentClassifierStackProps extends cdk.StackProps {
   // Add any custom props here
@@ -41,7 +41,6 @@ export class DocumentClassifierStack extends cdk.Stack {
     // IAM Role for Lambda
     //IAM role is a way to manage permissions for the lambda function
     //Basic Lambda functionality, i am assuming that the lambda role is a way to manage permissions for the lambda function
-
     const lambdaRole = new iam.Role(this, 'DocumentClassifierRole', {
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
@@ -54,23 +53,23 @@ export class DocumentClassifierStack extends cdk.Stack {
 
     // Document Classification Lambda
     //This lambda function is the main function that will be used to classify the documents using the Gemini AI model
-    //It contains the code for the lambda function, the runtime, the handler, the code, the role, the timeout, the memory size, the environment variables, and the log retention
+    //Using Docker container to handle unlimited dependencies
     //Secrets manager is a way to store and manage secrets for the lambda function
     //put gemini api key in secrets manager and access it in the lambda function
     // to be done through console or via CLI
     // parameter store
     // environments.ts file in config in user-api
-    const classificationLambda = new pythonLambda.PythonFunction(this, 'DocumentClassifier', {
-      runtime: lambda.Runtime.PYTHON_3_11,
-      handler: 'handler',
-      entry: 'src/lambdas/api',
-      index: 'classify_documents.py',
+    const classificationLambda = new lambda.DockerImageFunction(this, 'DocumentClassifier', {
+      code: lambda.DockerImageCode.fromImageAsset('src/lambdas/api', {
+        platform: Platform.LINUX_AMD64,  // Explicit architecture for Lambda compatibility
+      }),
+      architecture: lambda.Architecture.X86_64,  // Match the platform
       role: lambdaRole,
-      timeout: cdk.Duration.seconds(300),  // Increased for file processing
-      memorySize: 1024,  // Increased for larger files
+      timeout: cdk.Duration.seconds(300),
+      memorySize: 1024,
       environment: {
         UPLOADS_BUCKET: documentsBucket.bucketName,
-        RESULTS_BUCKET: documentsBucket.bucketName,  // Same bucket, different folders
+        RESULTS_BUCKET: documentsBucket.bucketName,
         GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
       },
       logRetention: logs.RetentionDays.ONE_WEEK,
